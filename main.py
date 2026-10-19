@@ -4,12 +4,12 @@ from pathlib import Path
 from tools import web_search, fetch_page
 from agents import planner, researcher, critic, writer
 
-def research_question(q, sources, notes):
+def research_question(q, sources, notes, log):
     results = web_search(q, 6)
     if not results:
         return
     pages = 0
-    for idx, r in enumerate(results):
+    for r in results:
         if pages < 3:
             text = fetch_page(r["url"])
             if len(text) > len(r["body"]):
@@ -18,29 +18,29 @@ def research_question(q, sources, notes):
         if r["url"] not in sources:
             sources[r["url"]] = {"n": len(sources) + 1, "title": r["title"]}
         r["n"] = sources[r["url"]]["n"]
-    print("    read", pages, "full pages,", len(results) - pages, "snippets")
+    log("    read " + str(pages) + " full pages, " + str(len(results) - pages) + " snippets")
     notes.append("Q: " + q + "\n" + researcher(q, results))
 
-def run(topic, rounds=2):
+def run(topic, rounds=2, log=print):
     sources, notes = {}, []
-    print("[Planner] planning...")
+    log("[Planner] planning...")
     questions = planner(topic)
     if not questions:
-        print("Planner returned no questions. Try rewording the topic.")
-        return
+        log("Planner returned no questions. Try rewording the topic.")
+        return None, None
     for q in questions:
-        print("  -", q)
+        log("  - " + q)
     for i in range(1, rounds + 1):
         for q in questions:
-            print("[Researcher] round", i, ":", q)
-            research_question(q, sources, notes)
-        print("[Critic] checking notes...")
+            log("[Researcher] round " + str(i) + " : " + q)
+            research_question(q, sources, notes, log)
+        log("[Critic] checking notes...")
         questions = critic(topic, notes)
         if not questions:
-            print("  approved")
+            log("  approved")
             break
-        print("  gaps found:", questions)
-    print("[Writer] writing report...")
+        log("  gaps found: " + "; ".join(questions))
+    log("[Writer] writing report...")
     body = writer(topic, notes)
     refs = "\n".join(
         "[" + str(v["n"]) + "] " + v["title"] + " - " + url
@@ -51,11 +51,11 @@ def run(topic, rounds=2):
     slug = re.sub(r"[^a-z0-9]+", "-", topic.lower()).strip("-")[:50]
     path = Path("reports") / (slug + ".md")
     path.write_text(report, encoding="utf-8")
-    print("\nSaved to", path)
+    log("Saved to " + str(path))
+    return report, path
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("topic")
     a = ap.parse_args()
     run(a.topic)
-

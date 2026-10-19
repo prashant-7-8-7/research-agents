@@ -27,6 +27,7 @@ Give it a topic and four AI agents work together to produce a cited research rep
 
     research-agents/
       main.py            Orchestrator: runs the agents in order and saves the report
+      app.py             Streamlit web interface
       agents.py          The four agents and their prompts
       tools.py           Web search (ddgs) and page reader (httpx + trafilatura)
       llm.py             Thin wrapper around the local Ollama model
@@ -72,6 +73,20 @@ You will see each agent report its progress:
 
 A run takes about 5-12 minutes on a laptop GPU, because each model call takes 10-60 seconds. The report is saved in the reports folder under the topic name. Running the same topic again overwrites it, so copy the file first if you want to keep it.
 
+## Run the web app
+
+    streamlit run app.py
+
+Open http://localhost:8501, type a topic and click Run research. The status box shows each agent's progress live, and the finished report appears on the page with a download button.
+
+## Screenshots
+
+![Web app screenshot 1](screenshots/shot1.png)
+
+![Web app screenshot 2](screenshots/shot2.png)
+
+![Web app screenshot 3](screenshots/shot3.png)
+
 ## Sample output
 
 See [reports/edge-ai-for-smart-cities.md](reports/edge-ai-for-smart-cities.md).
@@ -106,7 +121,7 @@ For a GPU with only 4 GB of VRAM, use a smaller model such as qwen2.5:3b and cha
 
 ## Roadmap
 
-- Streamlit web interface with live agent progress
+- Streamlit web interface with live agent progress (done)
 - PDF export of the report
 - Source reliability scoring
 - Support for reading PDF papers
@@ -118,3 +133,4 @@ Python, Ollama (qwen2.5:7b), ddgs, httpx, trafilatura
 ## Author
 
 prashant-7-8-7
+
