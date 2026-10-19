@@ -32,7 +32,7 @@ CRITIC_SYS = (
 
 WRITER_SYS = (
     "You are a research writer. Write a clear report in Markdown using ONLY the notes given. "
-    "Structure: a short Summary, then Key Findings with a heading per theme, then Open Questions. "
+    "Structure: a short Summary, then Key Findings with a heading per theme, then Open Questions. Open Questions must be 2 or 3 NEW questions that the notes did not answer. Never repeat the research questions or any topic already covered above. "
     "Keep the citation numbers like [1] exactly as they appear in the notes. "
     "Do not add a sources section. Do not invent facts."
 )
@@ -56,3 +56,4 @@ def writer(topic, notes):
         "Topic: " + topic + "\n\nNotes:\n" + "\n\n".join(notes)[:12000],
         max_tokens=2500,
     )
+
