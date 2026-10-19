@@ -112,6 +112,18 @@ For a GPU with only 4 GB of VRAM, use a smaller model such as qwen2.5:3b and cha
 - **PowerShell blocks Activate.ps1:** run Set-ExecutionPolicy -Scope CurrentUser RemoteSigned once.
 - **Notepad cannot find the report:** open it with the full path, or print it with Get-Content reports\your-report.md
 
+## Source quality
+
+Search results are filtered before the agents read them:
+
+- Sponsored ads are removed
+- Known low-quality content-farm sites are blocked
+- At most 2 results per website, so one site cannot dominate the report
+- Trusted domains (journals, universities, government and standards bodies) are ranked first
+- If fewer than 2 trusted sources show up, a second search aimed at studies and reviews is added
+
+On a solar panel recycling test, this removed 7 links to a content-farm site and moved the report's sources to mostly ScienceDirect, Springer, MDPI and Nature.
+
 ## Limitations
 
 - A small local 7B model can write generic sentences or attach a citation to a claim the source does not make. Spot-check important claims against the sources.
@@ -123,7 +135,7 @@ For a GPU with only 4 GB of VRAM, use a smaller model such as qwen2.5:3b and cha
 
 - Streamlit web interface with live agent progress (done)
 - PDF export of the report
-- Source reliability scoring
+- Smarter source reliability scoring (the current filter is a simple domain list)
 - Support for reading PDF papers
 
 ## Tech stack
@@ -133,4 +145,5 @@ Python, Ollama (qwen2.5:7b), ddgs, httpx, trafilatura
 ## Author
 
 prashant-7-8-7
+
 
