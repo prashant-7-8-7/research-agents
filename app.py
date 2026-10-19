@@ -1,5 +1,6 @@
 import streamlit as st
 from main import run
+from pdf_export import md_to_pdf
 
 st.set_page_config(page_title="Research Agents", layout="wide")
 st.title("Multi-Agent Research System")
@@ -16,5 +17,23 @@ if go:
             report, path = run(topic.strip(), log=lambda m: st.text(m))
             status.update(label="Done", state="complete")
         if report:
-            st.download_button("Download report (.md)", report, file_name=path.name)
-            st.markdown(report)
+            st.session_state["report"] = report
+            st.session_state["name"] = path.stem
+            try:
+                st.session_state["pdf"] = md_to_pdf(report)
+            except Exception:
+                st.session_state["pdf"] = None
+
+if "report" in st.session_state:
+    c1, c2, _ = st.columns([1, 1, 4])
+    c1.download_button(
+        "Download .md", st.session_state["report"],
+        file_name=st.session_state["name"] + ".md",
+    )
+    if st.session_state.get("pdf"):
+        c2.download_button(
+            "Download PDF", st.session_state["pdf"],
+            file_name=st.session_state["name"] + ".pdf",
+            mime="application/pdf",
+        )
+    st.markdown(st.session_state["report"])

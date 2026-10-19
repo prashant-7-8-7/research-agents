@@ -43,7 +43,7 @@ def run(topic, rounds=2, log=print):
     log("[Writer] writing report...")
     body = writer(topic, notes)
     refs = "\n".join(
-        "[" + str(v["n"]) + "] " + v["title"] + " - " + url
+        "[" + str(v["n"]) + "] " + v["title"][:90] + " - " + url
         for url, v in sorted(sources.items(), key=lambda kv: kv[1]["n"])
     )
     report = "# " + topic + "\n\n" + body + "\n\n## Sources\n\n" + refs + "\n"
@@ -59,3 +59,4 @@ if __name__ == "__main__":
     ap.add_argument("topic")
     a = ap.parse_args()
     run(a.topic)
+

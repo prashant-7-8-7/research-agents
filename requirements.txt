@@ -3,3 +3,5 @@ ddgs
 httpx
 trafilatura
 streamlit
+markdown
+xhtml2pdf
