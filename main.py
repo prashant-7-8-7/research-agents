@@ -1,4 +1,5 @@
 import argparse
+import json
 import re
 from pathlib import Path
 from tools import web_search, fetch_page
@@ -68,6 +69,7 @@ def run(topic, rounds=2, log=print):
     slug = re.sub(r"[^a-z0-9]+", "-", topic.lower()).strip("-")[:50]
     path = Path("reports") / (slug + ".md")
     path.write_text(report, encoding="utf-8")
+    path.with_suffix(".sources.json").write_text(json.dumps({str(v["n"]): {"url": url, "text": v["text"]} for url, v in sources.items()}), encoding="utf-8")
     log("Saved to " + str(path))
     return report, path
 
@@ -76,4 +78,5 @@ if __name__ == "__main__":
     ap.add_argument("topic")
     a = ap.parse_args()
     run(a.topic)
+
 

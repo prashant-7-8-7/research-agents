@@ -1,4 +1,7 @@
 venv/
 __pycache__/
 *.pyc
+scratch/
+reports/*.sources.json
 .env
+reports/*OLD*.md
