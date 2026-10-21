@@ -49,8 +49,36 @@ def web_search(query, n=5):
     return out[:n]
 
 def fetch_page(url, max_chars=2500):
-    if url.lower().endswith(".pdf"):
-        return ""
+    if urlparse(url).path.lower().endswith(".pdf"):
+        try:
+            from io import BytesIO
+            from pypdf import PdfReader
+
+            # Limit download size so a large PDF cannot exhaust laptop memory.
+            chunks = []
+            size = 0
+            with httpx.stream("GET", url, headers=HEADERS, follow_redirects=True, timeout=30) as r:
+                if r.status_code != 200:
+                    return ""
+                for chunk in r.iter_bytes():
+                    size += len(chunk)
+                    if size > 12 * 1024 * 1024:
+                        return ""
+                    chunks.append(chunk)
+
+            pdf = PdfReader(BytesIO(b"".join(chunks)))
+            parts = []
+            chars = 0
+            for page in pdf.pages[:8]:
+                text = page.extract_text() or ""
+                parts.append(text)
+                chars += len(text)
+                if chars >= max_chars:
+                    break
+            return "\n".join(parts)[:max_chars]
+        except Exception:
+            # The caller can still use the search-result snippet as fallback.
+            return ""
     try:
         r = httpx.get(url, headers=HEADERS, follow_redirects=True, timeout=15)
         if r.status_code != 200:

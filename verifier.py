@@ -1,5 +1,6 @@
 import re
 from llm import ask
+from evidence import select_evidence
 
 CHECK_SYS = (
     "You are a strict fact checker. You are given a SOURCE text and a CLAIM. "
@@ -16,7 +17,7 @@ Say SUPPORTED only if the quote states the same facts in the same direction. If 
 def check_claim_basic(claim, source_text):
     out = ask(
         DIRECTION_SYS,
-        "SOURCE:\n" + source_text[:3000] + "\n\nCLAIM:\n" + claim,
+        "SOURCE:\n" + select_evidence(claim, source_text) + "\n\nCLAIM:\n" + claim,
         max_tokens=250,
     )
     verdict = ""
@@ -40,7 +41,7 @@ for _a, _b in DIR_PAIRS:
 DIR_RE = re.compile(r"\b(" + "|".join(OPP) + r")\b", re.I)
 
 def _fill(src, template, w1, w2):
-    q = ("SOURCE:\n" + src[:3000] + "\n\nFill the blank with the word the source supports. "
+    q = ("SOURCE:\n" + select_evidence(template, src) + "\n\nFill the blank with the word the source supports. "
          "Options: " + w1 + " or " + w2 + ".\n\nSTATEMENT: " + template + "\n\nAnswer with one word only.")
     out = ask("You answer with exactly one word.", q, max_tokens=5).lower()
     if w1 in out and w2 not in out:
@@ -85,7 +86,7 @@ def _vote(fn, claim, text, n=3):
 
 
 def _tf(src, claim, order):
-    q = ("SOURCE:\n" + src[:3000] + "\n\nSTATEMENT: " + claim +
+    q = ("SOURCE:\n" + select_evidence(claim, src) + "\n\nSTATEMENT: " + claim +
          "\n\nBased only on the source, is the statement " + order + "? Answer with one word only.")
     out = ask("You answer with exactly one word.", q, max_tokens=5).lower()
     if "true" in out and "false" not in out:
