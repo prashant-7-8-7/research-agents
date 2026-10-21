@@ -5,3 +5,4 @@ scratch/
 reports/*.sources.json
 .env
 reports/*OLD*.md
+reports/*.md
