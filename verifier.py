@@ -49,16 +49,6 @@ def _fill(src, template, w1, w2):
         return w2
     return "?"
 
-def direction_check(claim, source_text):
-    m = DIR_RE.search(claim)
-    if not m:
-        return True
-    word = m.group(1).lower()
-    opp = OPP[word]
-    template = claim[:m.start()] + "___" + claim[m.end():]
-    a1 = _fill(source_text, template, word, opp)
-    a2 = _fill(source_text, template, opp, word)
-    return a1 == word and a2 == word
 
 def check_claim(claim, source_text):
     if not check_claim_basic(claim, source_text):
@@ -90,84 +80,8 @@ def verify_report_old(body, by_n, log=print):
     return results
 
 
-
-
-def _nums(s):
-    s = re.sub(r"\[\d+(?:\s*,\s*\d+)*\]", " ", s)
-    return {m.group().rstrip(",").replace(",", "") for m in re.finditer(r"\d[\d,]*(?:\.\d+)?", s)}
-
-def numbers_ok(claim, texts):
-    have = set()
-    for t in texts:
-        have |= _nums(t)
-    missing = sorted(_nums(claim) - have)
-    return (not missing), missing
-
-
 def _vote(fn, claim, text, n=3):
     return sum(1 for _ in range(n) if fn(claim, text))
-
-def _grade(claim, text):
-    b = _vote(check_claim_basic, claim, text)
-    if b == 0:
-        return "no"
-    d = _vote(direction_check, claim, text)
-    if d == 0:
-        return "no"
-    if b >= 2 and d >= 2:
-        return "yes"
-    return "unsure"
-
-def verify_report(body, by_n, log=print):
-    claims = extract_claims(body)
-    log("[Verifier] checking " + str(len(claims)) + " cited claims...")
-    results = []
-    for claim, nums in claims:
-        texts = [by_n.get(n, "") for n in nums]
-        texts = [t for t in texts if t]
-        if not texts:
-            log("  UNSUPPORTED (no source text) " + str(nums) + ": " + claim[:80])
-            results.append((claim, nums, False))
-            continue
-        ok_num, missing = numbers_ok(claim, texts)
-        if not ok_num:
-            log("  UNSUPPORTED (figure not in source: " + ", ".join(missing) + ") " + str(nums) + ": " + claim[:80])
-            results.append((claim, nums, False))
-            continue
-        grades = [_grade(claim, t) for t in texts]
-        if "yes" in grades:
-            results.append((claim, nums, True))
-        elif "unsure" in grades:
-            log("  CANT VERIFY " + str(nums) + ": " + claim[:80])
-            results.append((claim, nums, False))
-        else:
-            log("  UNSUPPORTED " + str(nums) + ": " + claim[:80])
-            results.append((claim, nums, False))
-    return results
-
-
-def _chunks(s):
-    s = re.sub(r"\[\d+(?:\s*,\s*\d+)*\]", " ", s)
-    out = set()
-    for w in s.split():
-        if re.search(r"\d", w):
-            w = w.strip(".,;:()\"'").lower().replace(",", "")
-            w = w.replace("\u20b9", "").replace("rs.", "").replace("$", "")
-            if re.fullmatch(r"\d+[\u2013-]\d+", w):
-                for x in re.split(r"[\u2013-]", w):
-                    out.add(x)
-                continue
-            if w:
-                out.add(w)
-    return out
-
-def numbers_ok(claim, texts):
-    src = " ".join(texts).lower().replace(",", "")
-    missing = []
-    for c in _chunks(claim):
-        if not re.search(r"(?<![\d\w])" + re.escape(c) + r"(?!\d)", src):
-            missing.append(c)
-    return (not missing), sorted(missing)
 
 
 def _tf(src, claim, order):
@@ -224,9 +138,8 @@ def direction_check(claim, source_text):
     a2 = _fill(source_text, template, opp, word)
     return a1 == word and a2 == word
 
-_old_verify_report = verify_report
 
-def verify_report(body, by_n, log=print):
+def _verify_report_core(body, by_n, log=print):
     claims = extract_claims(body)
     log("[Verifier] checking " + str(len(claims)) + " cited claims...")
     results = []
@@ -274,7 +187,6 @@ def name_flag(claim, texts):
             missing.append(w)
     return missing
 
-_prev_verify_report = verify_report
 
 def verify_report(body, by_n, log=print):
     claims = extract_claims(body)
@@ -289,10 +201,9 @@ def verify_report(body, by_n, log=print):
                 log("  CANT VERIFY (name not in source: " + ", ".join(nm) + ") " + str(nums) + ": " + claim[:80])
                 results.append((claim, nums, False))
                 continue
-        res = _prev_verify_report(claim, by_n, log=lambda m: None if "checking 1 cited" in m else log(m))
+        res = _verify_report_core(claim, by_n, log=lambda m: None if "checking 1 cited" in m else log(m))
         results.append((claim, nums, bool(res) and all(r[2] for r in res)))
     return results
-
 
 
 def _chunks(s):
